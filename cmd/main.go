@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/zeusito/my-go-template/pkg/config"
 
 	"github.com/zeusito/my-go-template/internal/api"
 	"github.com/zeusito/my-go-template/pkg/logger"
@@ -15,8 +18,14 @@ func main() {
 	// Setup logger
 	logger.MustConfigure()
 
+	// Load config
+	theConfs, err := config.LoadConfigurations()
+	if err != nil {
+		log.Fatalf("Error loading configurations: %s", err.Error())
+	}
+
 	// Init router
-	theRouter := router.NewHTTPRouter()
+	theRouter := router.NewHTTPRouter(theConfs.Server)
 
 	// Controllers
 	_ = api.NewHealthController(theRouter.Mux)

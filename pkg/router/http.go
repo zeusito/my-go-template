@@ -2,8 +2,11 @@ package router
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/zeusito/my-go-template/pkg/config"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,7 +18,7 @@ type HTTPRouter struct {
 	srv *http.Server
 }
 
-func NewHTTPRouter() *HTTPRouter {
+func NewHTTPRouter(cfgs config.ServerConfigurations) *HTTPRouter {
 	router := chi.NewRouter()
 
 	// A good base middleware stack
@@ -29,26 +32,22 @@ func NewHTTPRouter() *HTTPRouter {
 	// processing should be stopped.
 	router.Use(middleware.Timeout(20 * time.Second))
 
-	return &HTTPRouter{
-		Mux: router,
-	}
-}
-
-func (s *HTTPRouter) Start() {
-	// Listening address
-	listeningAddr := ":3000"
-
-	log.Info().Msgf("Server listening on port %s", ":3000")
-
 	// Customizing the server
-	s.srv = &http.Server{
-		Addr:         listeningAddr,
-		Handler:      s.Mux,
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%s", cfgs.Port),
+		Handler:      router,
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
 
-	// Start the server
+	return &HTTPRouter{
+		Mux: router,
+		srv: srv,
+	}
+}
+
+func (s *HTTPRouter) Start() {
+	log.Info().Msgf("Server listening on port %s", s.srv.Addr)
 	_ = s.srv.ListenAndServe()
 }
 
